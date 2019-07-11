@@ -1,25 +1,3 @@
-/* Task:
- simple web crawler
- Given a URL, it should output a simple textual sitemap, showing the links between pages.
-- The crawler should be limited to one subdomain
-- not follow external links
-
-show links
-*/
-
-/* Method:
-
-- struct to contain a pages url and sub-pages
-- main func sets recursive crawler off on base domain with given depth
-- walk function does the following:
-	1) check if depth == 0, and return if true
-	2) get links in page
-	3) for each link, set recursive call to parse its link with decremented depth
-	4) send link struct pointer to recursive call so when they all fold back down the walked structure is preserved in struct
-- after all walking routines finished, output structure to text file
-
-*/
-
 package main
 
 import (
@@ -32,7 +10,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-
 	"golang.org/x/net/html"
 )
 
@@ -43,6 +20,7 @@ type Link struct {
 }
 
 var domain string
+var initialBaseURL *url.URL
 var globalWait sync.WaitGroup
 
 func main() {
@@ -57,7 +35,8 @@ func main() {
 
 	// Define and save command line args
 	baseURLStr := flag.String("b", "monzo.com", "Starting URL to crawl from")
-	var searchDepth = *flag.Int("d", 4, "Number of levels you want to traverse (depth)")
+	var searchDepth int
+	flag.IntVar(&searchDepth, "d", 5, "Number of levels you want to traverse (depth)")
 	flag.Parse()
 
 	// Start the crawl
@@ -71,6 +50,7 @@ func main() {
 
 	// create link and set domain
 	domain = baseURL.Hostname()
+	initialBaseURL = baseURL
 	baseLink := &Link{URL: baseURL}
 
 	// start crawl from base link
@@ -154,7 +134,7 @@ func getLinksFromURL(link *url.URL) ([]*Link, error) {
 			// check if anchor tag found
 			tag := z.Token()
 			// worth noting  here thatthis does not guarantee 100% of links, could be stuff in javascript somewhere
-			isAnchor := tag.Data == "a"
+			isAnchor := tag.Data == "a" //|| tag.Data == "link"
 			if isAnchor {
 				// get href attribute
 				for _, a := range tag.Attr {
@@ -167,7 +147,13 @@ func getLinksFromURL(link *url.URL) ([]*Link, error) {
 							return nil, err
 						}
 
-						if l.Hostname() == domain {
+						if l.Hostname() == domain || !l.IsAbs(){
+							// if link is a path, append the domain to it
+							if !l.IsAbs() {
+								l = initialBaseURL.ResolveReference(l)
+							}
+							
+							// check if link has been seen on this page allready
 							if _, ok := seen[l.String()]; !ok {
 								//link has not been seen before and is of the right domain
 								lLink := &Link{URL: l}
@@ -176,6 +162,8 @@ func getLinksFromURL(link *url.URL) ([]*Link, error) {
 								seen[l.String()] = true
 								break
 							}
+						} else {
+							logger("i", fmt.Sprintf("Discarding url: %s", l.String()))
 						}
 					}
 				}
