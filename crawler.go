@@ -79,7 +79,7 @@ func main() {
 	globalWait.Wait()
 
 	// all routines returned so we can now print the textual sitemap
-	outputFile, err := os.Create(fmt.Sprintf("%s.txt", domain))
+	outputFile, err := os.Create(fmt.Sprintf("%s.txt", strings.Split(domain, ".")[0]))
 	if err != nil {
 		panic(err)
 	}
@@ -140,6 +140,9 @@ func getLinksFromURL(link *url.URL) ([]*Link, error) {
 	var newLinks []*Link
 	z := html.NewTokenizer(resp.Body)
 
+	// used to avoid duplicate links being returned
+	seen := make(map[string]bool)
+
 	for {
 		token := z.Next()
 
@@ -165,10 +168,14 @@ func getLinksFromURL(link *url.URL) ([]*Link, error) {
 						}
 
 						if l.Hostname() == domain {
-							// we will use this link
-							lLink := &Link{URL: l}
-							newLinks = append(newLinks, lLink)
-							break
+							if _, ok := seen[l.String()]; !ok {
+								//link has not been seen before and is of the right domain
+								lLink := &Link{URL: l}
+								newLinks = append(newLinks, lLink)
+								// add to seen map
+								seen[l.String()] = true
+								break
+							}
 						}
 					}
 				}
