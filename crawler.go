@@ -30,6 +30,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"sync"
 
 	"golang.org/x/net/html"
@@ -76,6 +77,15 @@ func main() {
 	globalWait.Add(1)
 	go crawl(baseLink, searchDepth)
 	globalWait.Wait()
+
+	// all routines returned so we can now print the textual sitemap
+	outputFile, err := os.Create(fmt.Sprintf("%s.txt", domain))
+	if err != nil {
+		panic(err)
+	}
+	defer outputFile.Close()
+
+	printSitemap(baseLink, 0, outputFile)
 
 }
 
@@ -174,6 +184,30 @@ func parseURL(URLString string) (*url.URL, error) {
 		logger("e", fmt.Sprintf("Could not parse URL: %s", URLString))
 	}
 	return resultURL, err
+}
+
+// Prints all links in the baseLink with the given indent level
+// To be used recursively
+func printSitemap(baseLink *Link, indent int, outputFile *os.File) error {
+	indentString := "        "
+
+	// print first link
+	if indent == 0 {
+		_, err := io.WriteString(outputFile, fmt.Sprintf("%s\n", baseLink.URL.String()))
+		if err != nil {
+			logger("e", fmt.Sprintf("Failed to write to file for: %s", baseLink.URL.String()))
+		}
+	}
+
+	for _, l := range baseLink.links {
+		_, err := io.WriteString(outputFile, fmt.Sprintf("%s - %s\n", strings.Repeat(indentString, indent), l.URL.String()))
+		if err != nil {
+			logger("e", fmt.Sprintf("Failed to write to file for: %s", l.URL.String()))
+		}
+		// print children links
+		printSitemap(l, indent+1, outputFile)
+	}
+	return nil
 }
 
 // Allows for levels of severity in our logger
