@@ -25,6 +25,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -40,14 +41,6 @@ type Link struct {
 	links []*Link
 }
 
-// Concurrency safe set implementation of seen links. saves us from traversing previously traversed links
-// although doesn't guarantee max depth is adheered to
-type Processed struct {
-	links map[string]*Link
-	mux   sync.Mutex
-}
-
-var processed = Processed{links: make(map[string]*Link)}
 var domain string
 var globalWait sync.WaitGroup
 
@@ -58,11 +51,12 @@ func main() {
 		log.Fatalf("Error opening file: %v", err)
 	}
 	defer f.Close()
-	log.SetOutput(f)
+	mw := io.MultiWriter(os.Stdout, f)
+	log.SetOutput(mw)
 
 	// Define and save command line args
 	baseURLStr := flag.String("b", "monzo.com", "Starting URL to crawl from")
-	var searchDepth = *flag.Int("d", 7, "Number of levels you want to traverse (depth)")
+	var searchDepth = *flag.Int("d", 4, "Number of levels you want to traverse (depth)")
 	flag.Parse()
 
 	// Start the crawl
@@ -77,7 +71,6 @@ func main() {
 	// create link and set domain
 	domain = baseURL.Hostname()
 	baseLink := &Link{URL: baseURL}
-	processed.links[baseURL.String()] = baseLink
 
 	// start crawl from base link
 	globalWait.Add(1)
@@ -94,6 +87,7 @@ Crawls one page:
 	. recursively set a new go routine running to crawl
 */
 func crawl(link *Link, depth int) {
+	logger("i", fmt.Sprintf("Starting crawl for: %s  ||  depth of %d", link.URL.String(), depth))
 	// handle wait group at start
 	defer globalWait.Done()
 
@@ -110,7 +104,17 @@ func crawl(link *Link, depth int) {
 	}
 
 	for _, newL := range newLinks {
-		logger("i", fmt.Sprintf("URL found: %s", newL.URL.String()))
+		// add to current links Links slice
+		link.links = append(link.links, newL)
+		// only proceed if next depth > 0
+		if depth-1 > 0 {
+			// Crawl each link found on this page
+			globalWait.Add(1)
+			go crawl(newL, depth-1)
+		} else {
+			return
+		}
+
 	}
 }
 
