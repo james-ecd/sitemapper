@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/url"
+	"sync"
 	"testing"
 )
 
@@ -57,6 +58,47 @@ func TestGetLinksFromURL(t *testing.T) {
 
 	// Verify every expected link was found
 	for k, v := range expectedResponses {
+		if !v {
+			//link wasn't found
+			t.Errorf("Expected URL: %s was not found...", k)
+		}
+	}
+}
+
+//test for main crawl function
+func TestCrawl(t *testing.T) {
+	// create dummy URL and LINK
+	testURLString := "https://www.tic.com"
+	testURL, _ := url.Parse(testURLString)
+	baseLink := &Link{URL: testURL}
+
+	// run a crawl of depth 1
+	var wg sync.WaitGroup
+	wg.Add(1)
+	crawl(baseLink, 1, testURL, &wg)
+	wg.Wait()
+
+	// verify data structure in baseLink is correct
+	expectedURLs := map[string]bool{
+		"https://www.tic.com/index.html":             false,
+		"https://www.tic.com/bios/index.html":        false,
+		"https://www.tic.com/books/index.html":       false,
+		"https://www.tic.com/opensource/index.html":  false,
+		"https://www.tic.com/partners/index.html":    false,
+		"https://www.tic.com/rfcs/index.html":        false,
+		"https://www.tic.com/whitepapers/index.html": false,
+	}
+
+	// check there are no unexpected links and mark found expected ones
+	for _, l := range baseLink.links {
+		if _, ok := expectedURLs[l.URL.String()]; !ok {
+			t.Errorf("Unexpected link found: %s", l.URL.String())
+		} else {
+			expectedURLs[l.URL.String()] = true
+		}
+	}
+	// check all expected links were found
+	for k, v := range expectedURLs {
 		if !v {
 			//link wasn't found
 			t.Errorf("Expected URL: %s was not found...", k)
