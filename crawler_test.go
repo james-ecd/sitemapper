@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"net/url"
+	"os"
 	"sync"
 	"testing"
 )
@@ -103,5 +105,56 @@ func TestCrawl(t *testing.T) {
 			//link wasn't found
 			t.Errorf("Expected URL: %s was not found...", k)
 		}
+	}
+}
+
+// test for print sitemap
+func TestPrintSitemap(t *testing.T) {
+	/*
+		Worth noting there may be a better way of doing this by mocking the os
+		and "writing" to a fake file. Decided to test it using a real file in
+		the interest of time...
+	*/
+	// create file
+	outputFile, _ := os.Create("test.txt")
+	// create dummy links
+	baseURL, _ := url.Parse("https://test.com")
+	subURL1, _ := url.Parse("https://test.com/sub1/")
+	subURL2, _ := url.Parse("https://test.com/sub2/")
+
+	baseLink := &Link{URL: baseURL}
+	subLink1 := &Link{URL: subURL1}
+	subLink2 := &Link{URL: subURL2}
+
+	baseLink.links = append(baseLink.links, subLink1, subLink2)
+
+	// write to file
+	printSitemap(baseLink, 0, outputFile)
+	outputFile.Close()
+
+	// verify file contents are correct
+	file, _ := os.Open("test.txt")
+	scanner := bufio.NewScanner(file)
+
+	expectedStrings := map[int]string{
+		0: "https://test.com",
+		1: " - https://test.com/sub1/",
+		2: " - https://test.com/sub2/",
+	}
+
+	index := 0
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line != expectedStrings[index] {
+			t.Errorf("Line did not match: %s - %s", expectedStrings[index], line)
+		}
+		index++
+	}
+	file.Close()
+
+	// delete file
+	err := os.Remove("test.txt")
+	if err != nil {
+		t.Errorf("Couldnt delete file: %s", err)
 	}
 }
