@@ -19,10 +19,6 @@ type Link struct {
 	links []*Link
 }
 
-var domain string
-var initialBaseURL *url.URL
-var globalWait sync.WaitGroup
-
 func main() {
 	// Setup logger
 	f, err := os.OpenFile("run.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -48,18 +44,17 @@ func main() {
 		panic(err)
 	}
 
-	// create link and set domain
-	domain = baseURL.Hostname()
-	initialBaseURL = baseURL
+	// create link and waitgroup
 	baseLink := &Link{URL: baseURL}
+	var globalWait sync.WaitGroup
 
 	// start crawl from base link
 	globalWait.Add(1)
-	go crawl(baseLink, searchDepth)
+	go crawl(baseLink, searchDepth, baseURL, &globalWait)
 	globalWait.Wait()
 
 	// all routines returned so we can now print the textual sitemap
-	outputFile, err := os.Create(fmt.Sprintf("%s.txt", strings.Split(domain, ".")[0]))
+	outputFile, err := os.Create(fmt.Sprintf("%s.txt", strings.Split(baseURL.Hostname(), ".")[0]))
 	if err != nil {
 		panic(err)
 	}
@@ -76,7 +71,7 @@ Crawls one page:
 3) for each link
 	. recursively set a new go routine running to crawl
 */
-func crawl(link *Link, depth int) {
+func crawl(link *Link, depth int, initialBaseURL *url.URL, globalWait *sync.WaitGroup) {
 	logger("i", fmt.Sprintf("Starting crawl for: %s  ||  depth of %d", link.URL.String(), depth))
 	// handle wait group at start
 	defer globalWait.Done()
@@ -87,7 +82,7 @@ func crawl(link *Link, depth int) {
 	}
 
 	// get all links on the given page
-	newLinks, err := getLinksFromURL(link.URL)
+	newLinks, err := getLinksFromURL(link.URL, initialBaseURL)
 	if err != nil {
 		logger("e", fmt.Sprintf("Error getting links for: %s \n", link.URL.String()))
 		return
@@ -100,13 +95,13 @@ func crawl(link *Link, depth int) {
 		if depth-1 > 0 {
 			// Crawl each link found on this page
 			globalWait.Add(1)
-			go crawl(newL, depth-1)
+			go crawl(newL, depth-1, initialBaseURL, globalWait)
 		}
 	}
 	return
 }
 
-func getLinksFromURL(link *url.URL) ([]*Link, error) {
+func getLinksFromURL(link *url.URL, baseURL *url.URL) ([]*Link, error) {
 	// get response
 	resp, err := http.Get(link.String())
 	if err != nil {
@@ -145,10 +140,10 @@ func getLinksFromURL(link *url.URL) ([]*Link, error) {
 							return nil, err
 						}
 
-						if l.Hostname() == domain || !l.IsAbs() {
+						if l.Hostname() == baseURL.Hostname() || !l.IsAbs() {
 							// if link is a path, append the domain to it
 							if !l.IsAbs() {
-								l = initialBaseURL.ResolveReference(l)
+								l = baseURL.ResolveReference(l)
 							}
 
 							// check if link has been seen on this page allready
@@ -207,8 +202,8 @@ func printSitemap(baseLink *Link, indent int, outputFile *os.File) error {
 func logger(severity string, message string) {
 	switch severity {
 	case "e":
-		log.Print(fmt.Sprintf("[ERROR] %s", message))
+		log.Printf("[ERROR] %s", message)
 	case "i":
-		log.Print(fmt.Sprintf("[INFO] %s", message))
+		log.Printf("[INFO] %s", message)
 	}
 }
