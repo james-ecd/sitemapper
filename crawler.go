@@ -30,7 +30,7 @@ func main() {
 	log.SetOutput(mw)
 
 	// Define and save command line args
-	baseURLStr := flag.String("b", "monzo.com", "Starting URL to crawl from")
+	baseURLStr := flag.String("b", "https://monzo.com", "Starting URL to crawl from")
 	var searchDepth int
 	flag.IntVar(&searchDepth, "d", 5, "Number of levels you want to traverse (depth)")
 	flag.Parse()
@@ -65,7 +65,11 @@ func main() {
 	}
 	defer outputFile.Close()
 
+	logger("i", "Writing textual sitemap...")
+
 	printSitemap(baseLink, 0, outputFile)
+
+	logger("i", "Crawl finished!")
 
 }
 
