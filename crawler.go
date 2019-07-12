@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"golang.org/x/net/html"
 	"io"
 	"log"
 	"net/http"
@@ -10,7 +11,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"golang.org/x/net/html"
 )
 
 // Link struct represents a page and all links found on the page
@@ -101,11 +101,9 @@ func crawl(link *Link, depth int) {
 			// Crawl each link found on this page
 			globalWait.Add(1)
 			go crawl(newL, depth-1)
-		} else {
-			return
 		}
-
 	}
+	return
 }
 
 func getLinksFromURL(link *url.URL) ([]*Link, error) {
@@ -147,12 +145,12 @@ func getLinksFromURL(link *url.URL) ([]*Link, error) {
 							return nil, err
 						}
 
-						if l.Hostname() == domain || !l.IsAbs(){
+						if l.Hostname() == domain || !l.IsAbs() {
 							// if link is a path, append the domain to it
 							if !l.IsAbs() {
 								l = initialBaseURL.ResolveReference(l)
 							}
-							
+
 							// check if link has been seen on this page allready
 							if _, ok := seen[l.String()]; !ok {
 								//link has not been seen before and is of the right domain
