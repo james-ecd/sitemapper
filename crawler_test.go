@@ -63,5 +63,3 @@ func TestGetLinksFromURL(t *testing.T) {
 		}
 	}
 }
-
-// test for

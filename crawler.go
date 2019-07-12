@@ -35,7 +35,6 @@ func main() {
 	flag.IntVar(&searchDepth, "d", 5, "Number of levels you want to traverse (depth)")
 	flag.Parse()
 
-	// Start the crawl
 	log.Print(fmt.Sprintf("------- STARTING NEW CRAWL FOR: %s -------", *baseURLStr))
 
 	baseURL, err := parseURL(*baseURLStr)
@@ -54,7 +53,13 @@ func main() {
 	globalWait.Wait()
 
 	// all routines returned so we can now print the textual sitemap
-	outputFile, err := os.Create(fmt.Sprintf("%s.txt", strings.Split(baseURL.Hostname(), ".")[0]))
+	var filename string
+	if strings.Split(baseURL.Hostname(), ".")[0] == "www" {
+		filename = fmt.Sprintf("%s.txt", strings.Split(baseURL.Hostname(), ".")[1])
+	} else {
+		filename = fmt.Sprintf("%s.txt", strings.Split(baseURL.Hostname(), ".")[0])
+	}
+	outputFile, err := os.Create(filename)
 	if err != nil {
 		panic(err)
 	}
