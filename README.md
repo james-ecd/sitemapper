@@ -1,5 +1,5 @@
-# monzo_crawler
-Web crawler excersise for monzo - written in go, by James Davis
+# Web page scraper
+Concurrent scraper for a specific domain.
 
 **Installation**
 
