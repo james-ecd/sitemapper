@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Link struct represents a page and all links found on the page
@@ -21,7 +22,11 @@ type Link struct {
 
 func main() {
 	// Setup logger
-	f, err := os.OpenFile("run.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	createDirIfNotExist("./output")
+	createDirIfNotExist("output/logs")
+	logFileName := generateDateFileName("output/logs/log_")
+
+	f, err := os.OpenFile(logFileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("Error opening file: %v", err)
 	}
@@ -30,7 +35,7 @@ func main() {
 	log.SetOutput(mw)
 
 	// Define and save command line args
-	baseURLStr := flag.String("b", "https://monzo.com", "Starting URL to crawl from")
+	baseURLStr := flag.String("b", "https://example.com", "Starting URL to crawl from")
 	var searchDepth int
 	flag.IntVar(&searchDepth, "d", 5, "Number of levels you want to traverse (depth)")
 	flag.Parse()
@@ -53,13 +58,15 @@ func main() {
 	globalWait.Wait()
 
 	// all routines returned so we can now print the textual sitemap
-	var filename string
-	if strings.Split(baseURL.Hostname(), ".")[0] == "www" {
-		filename = fmt.Sprintf("%s.txt", strings.Split(baseURL.Hostname(), ".")[1])
-	} else {
-		filename = fmt.Sprintf("%s.txt", strings.Split(baseURL.Hostname(), ".")[0])
+	createDirIfNotExist("./output")
+	var filePrefix string
+	switch strings.Split(baseURL.Hostname(), ".")[0] {
+	case "www":
+		filePrefix = strings.Split(baseURL.Hostname(), ".")[1]
+	default:
+		filePrefix = strings.Split(baseURL.Hostname(), ".")[0]
 	}
-	outputFile, err := os.Create(filename)
+	outputFile, err := os.Create(generateDateFileName(fmt.Sprintf("output/%s_", filePrefix)))
 	if err != nil {
 		panic(err)
 	}
@@ -75,10 +82,10 @@ func main() {
 
 /*
 Crawls one page:
-1) check if depth reached, and return if it has
-2) gets all links on a page
-3) for each link
-	. recursively set a new go routine running to crawl
+ 1. check if depth reached, and return if it has
+ 2. gets all links on a page
+ 3. for each link
+    . recursively set a new go routine running to crawl
 */
 func crawl(link *Link, depth int, initialBaseURL *url.URL, globalWait *sync.WaitGroup) {
 	logger("i", fmt.Sprintf("Starting crawl for: %s  ||  depth of %d", link.URL.String(), depth))
@@ -215,4 +222,18 @@ func logger(severity string, message string) {
 	case "i":
 		log.Printf("[INFO] %s", message)
 	}
+}
+
+func createDirIfNotExist(path string) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		err := os.Mkdir(path, 0755)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func generateDateFileName(datePrefix string) string {
+	now := time.Now().UTC().Format("2006-01-02_15-04-05")
+	return fmt.Sprintf("%s_%s", datePrefix, now)
 }

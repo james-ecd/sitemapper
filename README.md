@@ -1,5 +1,5 @@
-# Web page scraper
-Concurrent scraper for a specific domain.
+# Sitemapper
+Tool for crawling a given domain, and mapping out it's URL's based on scraped links
 
 **Installation**
 
@@ -8,19 +8,15 @@ Concurrent scraper for a specific domain.
 
 **Example usage**
 
-    go run crawler -d 5 -b monzo.com
+    go run crawler -d 5 -b example.com
 
     go run crawler --help
 
 **Output**
-| \<domain\>.txt | textual sitemap text file |
-|--|--|
-| run.log |rolling log file  |
+- `.txt`: textual sitemap text file |
+- `.log`: log file 
 		
 
 **Tests**
-	
-	
 
     go test
-

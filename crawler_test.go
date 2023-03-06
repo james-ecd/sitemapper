@@ -11,7 +11,7 @@ import (
 // test for parseURL
 func TestParseURL(t *testing.T) {
 
-	URLString := "monzo.com"
+	URLString := "example.com"
 
 	resultsURL, err := parseURL(URLString)
 
@@ -67,7 +67,7 @@ func TestGetLinksFromURL(t *testing.T) {
 	}
 }
 
-//test for main crawl function
+// test for main crawl function
 func TestCrawl(t *testing.T) {
 	// create dummy URL and LINK
 	testURLString := "https://www.tic.com"
