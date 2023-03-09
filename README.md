@@ -26,3 +26,135 @@ A play project for learning go.
 **Tests**
 
     go test
+
+**Usage example**
+
+    go run . -b https://www.katakwe.com -d 2
+
+```
+https://www.katakwe.com/
+ - https://www.katakwe.com/
+         - https://www.katakwe.com/
+         - https://www.katakwe.com/api/auth/login
+         - https://www.katakwe.com/providers
+         - https://www.katakwe.com/parents
+         - https://www.katakwe.com/overview
+         - https://www.katakwe.com/earnings
+         - https://www.katakwe.com/social-responsibility
+         - https://www.katakwe.com/commitment-to-privacy
+         - https://www.katakwe.com/terms-and-conditions
+         - https://www.katakwe.com/privacy-policy
+         - https://www.katakwe.com/competition-terms-and-conditions
+ - https://www.katakwe.com/api/auth/login
+         - https://www.katakwe.com/
+         - https://www.katakwe.com/contact-us
+ - https://www.katakwe.com/providers
+         - https://www.katakwe.com/
+         - https://www.katakwe.com/api/auth/login
+         - https://www.katakwe.com/providers
+         - https://www.katakwe.com/parents
+         - https://www.katakwe.com/overview
+         - https://www.katakwe.com/earnings
+         - https://www.katakwe.com/social-responsibility
+         - https://www.katakwe.com/commitment-to-privacy
+         - https://www.katakwe.com/terms-and-conditions
+         - https://www.katakwe.com/privacy-policy
+         - https://www.katakwe.com/competition-terms-and-conditions
+ - https://www.katakwe.com/parents
+         - https://www.katakwe.com/
+         - https://www.katakwe.com/api/auth/login
+         - https://www.katakwe.com/providers
+         - https://www.katakwe.com/parents
+         - https://www.katakwe.com/overview
+         - https://www.katakwe.com/earnings
+         - https://www.katakwe.com/social-responsibility
+         - https://www.katakwe.com/commitment-to-privacy
+         - https://www.katakwe.com/terms-and-conditions
+         - https://www.katakwe.com/privacy-policy
+         - https://www.katakwe.com/competition-terms-and-conditions
+ - https://www.katakwe.com/overview
+         - https://www.katakwe.com/
+         - https://www.katakwe.com/api/auth/login
+         - https://www.katakwe.com/providers
+         - https://www.katakwe.com/parents
+         - https://www.katakwe.com/overview
+         - https://www.katakwe.com/earnings
+         - https://www.katakwe.com/social-responsibility
+         - https://www.katakwe.com/commitment-to-privacy
+         - https://www.katakwe.com/terms-and-conditions
+         - https://www.katakwe.com/privacy-policy
+         - https://www.katakwe.com/competition-terms-and-conditions
+ - https://www.katakwe.com/earnings
+         - https://www.katakwe.com/
+         - https://www.katakwe.com/api/auth/login
+         - https://www.katakwe.com/providers
+         - https://www.katakwe.com/parents
+         - https://www.katakwe.com/overview
+         - https://www.katakwe.com/earnings
+         - https://www.katakwe.com/social-responsibility
+         - https://www.katakwe.com/commitment-to-privacy
+         - https://www.katakwe.com/terms-and-conditions
+         - https://www.katakwe.com/privacy-policy
+         - https://www.katakwe.com/competition-terms-and-conditions
+ - https://www.katakwe.com/social-responsibility
+         - https://www.katakwe.com/
+         - https://www.katakwe.com/api/auth/login
+         - https://www.katakwe.com/providers
+         - https://www.katakwe.com/parents
+         - https://www.katakwe.com/overview
+         - https://www.katakwe.com/earnings
+         - https://www.katakwe.com/social-responsibility
+         - https://www.katakwe.com/commitment-to-privacy
+         - https://www.katakwe.com/terms-and-conditions
+         - https://www.katakwe.com/privacy-policy
+         - https://www.katakwe.com/competition-terms-and-conditions
+ - https://www.katakwe.com/commitment-to-privacy
+         - https://www.katakwe.com/
+         - https://www.katakwe.com/api/auth/login
+         - https://www.katakwe.com/providers
+         - https://www.katakwe.com/parents
+         - https://www.katakwe.com/overview
+         - https://www.katakwe.com/earnings
+         - https://www.katakwe.com/social-responsibility
+         - https://www.katakwe.com/commitment-to-privacy
+         - https://www.katakwe.com/terms-and-conditions
+         - https://www.katakwe.com/privacy-policy
+         - https://www.katakwe.com/competition-terms-and-conditions
+ - https://www.katakwe.com/terms-and-conditions
+         - https://www.katakwe.com/
+         - https://www.katakwe.com/api/auth/login
+         - https://www.katakwe.com/providers
+         - https://www.katakwe.com/parents
+         - https://www.katakwe.com/overview
+         - https://www.katakwe.com/earnings
+         - https://www.katakwe.com/social-responsibility
+         - https://www.katakwe.com/privacy-policy
+         - https://www.katakwe.com/commitment-to-privacy
+         - https://www.katakwe.com/terms-and-conditions
+         - https://www.katakwe.com/competition-terms-and-conditions
+ - https://www.katakwe.com/privacy-policy
+         - https://www.katakwe.com/
+         - https://www.katakwe.com/api/auth/login
+         - https://www.katakwe.com/providers
+         - https://www.katakwe.com/parents
+         - https://www.katakwe.com/overview
+         - https://www.katakwe.com/earnings
+         - https://www.katakwe.com/social-responsibility
+         - https://www.katakwe.com/commitment-to-privacy
+         - https://www.katakwe.com/terms-and-conditions
+         - https://www.katakwe.com/privacy-policy
+         - https://www.katakwe.com/competition-terms-and-conditions
+ - https://www.katakwe.com/competition-terms-and-conditions
+         - https://www.katakwe.com/
+         - https://www.katakwe.com/api/auth/login
+         - https://www.katakwe.com/providers
+         - https://www.katakwe.com/parents
+         - https://www.katakwe.com/overview
+         - https://www.katakwe.com/earnings
+         - https://www.katakwe.com/social-responsibility
+         - https://www.katakwe.com/commitment-to-privacy
+         - https://www.katakwe.com/terms-and-conditions
+         - https://www.katakwe.com/privacy-policy
+         - https://www.katakwe.com/competition-terms-and-conditions
+
+```
