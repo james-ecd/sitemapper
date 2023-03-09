@@ -55,7 +55,7 @@ func main() {
 		panic(err)
 	}
 
-	// create link and waitgroup
+	// create link and wait group
 	baseLink := &Link{URL: baseURL}
 	var globalWait sync.WaitGroup
 
@@ -64,7 +64,7 @@ func main() {
 	go crawl(baseLink, searchDepth, baseURL, &globalWait)
 	globalWait.Wait()
 
-	// all routines returned so we can now print the textual sitemap
+	// all routines returned, so we can now print the textual sitemap
 	createDirIfNotExist("./output")
 	var filePrefix string
 	switch strings.Split(baseURL.Hostname(), ".")[0] {
@@ -156,7 +156,7 @@ func getLinksFromURL(link *url.URL, baseURL *url.URL) ([]*Link, error) {
 		case token == html.StartTagToken:
 			// check if anchor tag found
 			tag := z.Token()
-			// worth noting  here thatthis does not guarantee 100% of links, could be stuff in javascript somewhere
+			// worth noting here that this does not guarantee 100% of links, could be stuff in javascript somewhere
 			isAnchor := tag.Data == "a" //|| tag.Data == "link"
 			if isAnchor {
 				// get href attribute
@@ -176,7 +176,7 @@ func getLinksFromURL(link *url.URL, baseURL *url.URL) ([]*Link, error) {
 								l = baseURL.ResolveReference(l)
 							}
 
-							// check if link has been seen on this page allready
+							// check if link has been seen on this page already
 							if _, ok := seen[l.String()]; !ok {
 								//link has not been seen before and is of the right domain
 								lLink := &Link{URL: l}
@@ -195,7 +195,7 @@ func getLinksFromURL(link *url.URL, baseURL *url.URL) ([]*Link, error) {
 	}
 }
 
-// Takes a url string and retruns a url.URL type if valid
+// Takes a url string and returns an url.URL type if valid
 func parseURL(URLString string) (*url.URL, error) {
 	resultURL, err := url.Parse(URLString)
 	if err != nil {
