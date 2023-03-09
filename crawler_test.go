@@ -28,10 +28,10 @@ func TestParseURL(t *testing.T) {
 // test for getLinksFromURL
 func TestGetLinksFromURL(t *testing.T) {
 	/*
-		Issue with this test is finding a static webstie where links wont change.
-		If we don't have such a website, than the test if liable for false negatives.
-		In a production enviroment you would host a simple webpage specifically for this test,
-		however to save time I have used a static resource found online, that hasn't change in over 10 years.
+		Issue with this test is finding a static website where links won't change.
+		If we don't have such a website, then the test if liable for false negatives.
+		In a production environment you would host a simple webpage specifically for this test,
+		however to save time I have used a static resource found online, that hasn't changed in over 10 years.
 	*/
 
 	testURLString := "https://www.tic.com"
@@ -129,8 +129,14 @@ func TestPrintSitemap(t *testing.T) {
 	baseLink.links = append(baseLink.links, subLink1, subLink2)
 
 	// write to file
-	printSitemap(baseLink, 0, outputFile)
-	outputFile.Close()
+	err := printSitemap(baseLink, 0, outputFile)
+	if err != nil {
+		t.Errorf("Couldnt printSitemap: %s", err)
+	}
+	err = outputFile.Close()
+	if err != nil {
+		t.Errorf("Couldnt close outputFile: %s", err)
+	}
 
 	// verify file contents are correct
 	file, _ := os.Open("test.txt")
@@ -150,10 +156,13 @@ func TestPrintSitemap(t *testing.T) {
 		}
 		index++
 	}
-	file.Close()
+	err = file.Close()
+	if err != nil {
+		t.Errorf("Couldnt close file: %s", err)
+	}
 
 	// delete file
-	err := os.Remove("test.txt")
+	err = os.Remove("test.txt")
 	if err != nil {
 		t.Errorf("Couldnt delete file: %s", err)
 	}

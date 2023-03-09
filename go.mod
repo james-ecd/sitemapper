@@ -1,4 +1,4 @@
-module sitemapper
+module github.com/james-ecd/sitemapper
 
 go 1.20
 

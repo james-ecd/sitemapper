@@ -1,9 +1,9 @@
+// Main package containing scraper logic and cli
 package main
 
 import (
 	"flag"
 	"fmt"
-	"golang.org/x/net/html"
 	"io"
 	"log"
 	"net/http"
@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/net/html"
 )
 
 // Link struct represents a page and all links found on the page
@@ -30,7 +32,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error opening file: %v", err)
 	}
-	defer f.Close()
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			return
+		}
+	}(f)
 	mw := io.MultiWriter(os.Stdout, f)
 	log.SetOutput(mw)
 
@@ -40,7 +47,7 @@ func main() {
 	flag.IntVar(&searchDepth, "d", 5, "Number of levels you want to traverse (depth)")
 	flag.Parse()
 
-	log.Print(fmt.Sprintf("------- STARTING NEW CRAWL FOR: %s -------", *baseURLStr))
+	log.Printf("------- STARTING NEW CRAWL FOR: %s -------", *baseURLStr)
 
 	baseURL, err := parseURL(*baseURLStr)
 	if err != nil {
@@ -70,11 +77,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer outputFile.Close()
+	defer func(outputFile *os.File) {
+		err := outputFile.Close()
+		if err != nil {
+			return
+		}
+	}(outputFile)
 
 	logger("i", "Writing textual sitemap...")
 
-	printSitemap(baseLink, 0, outputFile)
+	err = printSitemap(baseLink, 0, outputFile)
+	if err != nil {
+		return
+	}
 
 	logger("i", "Crawl finished!")
 
@@ -114,7 +129,6 @@ func crawl(link *Link, depth int, initialBaseURL *url.URL, globalWait *sync.Wait
 			go crawl(newL, depth-1, initialBaseURL, globalWait)
 		}
 	}
-	return
 }
 
 func getLinksFromURL(link *url.URL, baseURL *url.URL) ([]*Link, error) {
@@ -209,7 +223,10 @@ func printSitemap(baseLink *Link, indent int, outputFile *os.File) error {
 			logger("e", fmt.Sprintf("Failed to write to file for: %s", l.URL.String()))
 		}
 		// print children links
-		printSitemap(l, indent+1, outputFile)
+		err = printSitemap(l, indent+1, outputFile)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
