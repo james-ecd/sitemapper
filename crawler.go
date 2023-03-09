@@ -16,14 +16,14 @@ import (
 	"golang.org/x/net/html"
 )
 
-// Link struct represents a page and all links found on the page
-type Link struct {
+// Page struct represents a page and all links found on the page
+type Page struct {
 	URL   *url.URL
-	links []*Link
+	links []*Page
 }
 
 func main() {
-	// Setup logger
+	// setup logger
 	createDirIfNotExist("./output")
 	createDirIfNotExist("output/logs")
 	logFileName := generateDateFileName("output/logs/log_")
@@ -41,30 +41,29 @@ func main() {
 	mw := io.MultiWriter(os.Stdout, f)
 	log.SetOutput(mw)
 
-	// Define and save command line args
+	// setup cli
 	baseURLStr := flag.String("b", "https://example.com", "Starting URL to crawl from")
 	var searchDepth int
 	flag.IntVar(&searchDepth, "d", 5, "Number of levels you want to traverse (depth)")
 	flag.Parse()
 
+	// start crawling
 	log.Printf("------- STARTING NEW CRAWL FOR: %s -------", *baseURLStr)
-
 	baseURL, err := parseURL(*baseURLStr)
 	if err != nil {
 		logger("e", "Base url could not be parsed")
 		panic(err)
 	}
 
-	// create link and wait group
-	baseLink := &Link{URL: baseURL}
+	// start crawl from base page
+	basePage := &Page{URL: baseURL}
 	var globalWait sync.WaitGroup
-
-	// start crawl from base link
 	globalWait.Add(1)
-	go crawl(baseLink, searchDepth, baseURL, &globalWait)
+	go crawl(basePage, searchDepth, baseURL, &globalWait)
 	globalWait.Wait()
 
 	// all routines returned, so we can now print the textual sitemap
+	// create output file
 	createDirIfNotExist("./output")
 	var filePrefix string
 	switch strings.Split(baseURL.Hostname(), ".")[0] {
@@ -84,54 +83,53 @@ func main() {
 		}
 	}(outputFile)
 
+	// write sitemap to output file
 	logger("i", "Writing textual sitemap...")
-
-	err = printSitemap(baseLink, 0, outputFile)
+	err = printSitemap(basePage, 0, outputFile)
 	if err != nil {
 		return
 	}
 
 	logger("i", "Crawl finished!")
-
 }
 
 /*
 Crawls one page:
  1. check if depth reached, and return if it has
- 2. gets all links on a page
+ 2. get all links on a page
  3. for each link
     . recursively set a new go routine running to crawl
 */
-func crawl(link *Link, depth int, initialBaseURL *url.URL, globalWait *sync.WaitGroup) {
-	logger("i", fmt.Sprintf("Starting crawl for: %s  ||  depth of %d", link.URL.String(), depth))
+func crawl(page *Page, depth int, initialBaseURL *url.URL, globalWait *sync.WaitGroup) {
+	logger("i", fmt.Sprintf("Starting crawl for: %s  ||  depth of %d", page.URL.String(), depth))
 	// handle wait group at start
 	defer globalWait.Done()
 
-	// check depth
+	// check depth and return if max depth
 	if depth == 0 {
 		return
 	}
 
 	// get all links on the given page
-	newLinks, err := getLinksFromURL(link.URL, initialBaseURL)
+	newLinks, err := getLinksFromURL(page.URL, initialBaseURL)
 	if err != nil {
-		logger("e", fmt.Sprintf("Error getting links for: %s \n", link.URL.String()))
+		logger("e", fmt.Sprintf("Error getting links for: %s \n", page.URL.String()))
 		return
 	}
 
 	for _, newL := range newLinks {
-		// add to current links Links slice
-		link.links = append(link.links, newL)
+		// add to current pages Links slice
+		page.links = append(page.links, newL)
 		// only proceed if next depth > 0
 		if depth-1 > 0 {
-			// Crawl each link found on this page
+			// Crawl each page found on this page
 			globalWait.Add(1)
 			go crawl(newL, depth-1, initialBaseURL, globalWait)
 		}
 	}
 }
 
-func getLinksFromURL(link *url.URL, baseURL *url.URL) ([]*Link, error) {
+func getLinksFromURL(link *url.URL, baseURL *url.URL) ([]*Page, error) {
 	// get response
 	resp, err := http.Get(link.String())
 	if err != nil {
@@ -140,7 +138,7 @@ func getLinksFromURL(link *url.URL, baseURL *url.URL) ([]*Link, error) {
 	}
 
 	// parse for <a> tags
-	var newLinks []*Link
+	var newPages []*Page
 	z := html.NewTokenizer(resp.Body)
 
 	// used to avoid duplicate links being returned
@@ -152,7 +150,7 @@ func getLinksFromURL(link *url.URL, baseURL *url.URL) ([]*Link, error) {
 		switch {
 		case token == html.ErrorToken:
 			// End of page, return
-			return newLinks, nil
+			return newPages, nil
 		case token == html.StartTagToken:
 			// check if anchor tag found
 			tag := z.Token()
@@ -179,8 +177,8 @@ func getLinksFromURL(link *url.URL, baseURL *url.URL) ([]*Link, error) {
 							// check if link has been seen on this page already
 							if _, ok := seen[l.String()]; !ok {
 								//link has not been seen before and is of the right domain
-								lLink := &Link{URL: l}
-								newLinks = append(newLinks, lLink)
+								lPage := &Page{URL: l}
+								newPages = append(newPages, lPage)
 								// add to seen map
 								seen[l.String()] = true
 								break
@@ -204,20 +202,21 @@ func parseURL(URLString string) (*url.URL, error) {
 	return resultURL, err
 }
 
-// Prints all links in the baseLink with the given indent level
+// Prints all links in the basePage with the given indent level
 // To be used recursively
-func printSitemap(baseLink *Link, indent int, outputFile *os.File) error {
+func printSitemap(basePage *Page, indent int, outputFile *os.File) error {
 	indentString := "        "
 
-	// print first link
+	// print basePage URL
 	if indent == 0 {
-		_, err := io.WriteString(outputFile, fmt.Sprintf("%s\n", baseLink.URL.String()))
+		_, err := io.WriteString(outputFile, fmt.Sprintf("%s\n", basePage.URL.String()))
 		if err != nil {
-			logger("e", fmt.Sprintf("Failed to write to file for: %s", baseLink.URL.String()))
+			logger("e", fmt.Sprintf("Failed to write to file for: %s", basePage.URL.String()))
 		}
 	}
 
-	for _, l := range baseLink.links {
+	// print basePage links recursively
+	for _, l := range basePage.links {
 		_, err := io.WriteString(outputFile, fmt.Sprintf("%s - %s\n", strings.Repeat(indentString, indent), l.URL.String()))
 		if err != nil {
 			logger("e", fmt.Sprintf("Failed to write to file for: %s", l.URL.String()))
@@ -241,6 +240,7 @@ func logger(severity string, message string) {
 	}
 }
 
+// create a directory given in a path if one doesn't already exist
 func createDirIfNotExist(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		err := os.Mkdir(path, 0755)
@@ -250,6 +250,7 @@ func createDirIfNotExist(path string) {
 	}
 }
 
+// generate a filename using a given prefix and time.now
 func generateDateFileName(datePrefix string) string {
 	now := time.Now().UTC().Format("2006-01-02_15-04-05")
 	return fmt.Sprintf("%s_%s", datePrefix, now)

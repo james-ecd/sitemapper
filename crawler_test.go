@@ -29,8 +29,8 @@ func TestParseURL(t *testing.T) {
 func TestGetLinksFromURL(t *testing.T) {
 	/*
 		Issue with this test is finding a static website where links won't change.
-		If we don't have such a website, then the test if liable for false negatives.
-		In a production environment you would host a simple webpage specifically for this test,
+		If we don't have such a website, then the test is liable for false negatives.
+		In a production environment you would host or mock a webpage specifically for this test,
 		however to save time I have used a static resource found online, that hasn't changed in over 10 years.
 	*/
 
@@ -72,15 +72,15 @@ func TestCrawl(t *testing.T) {
 	// create dummy URL and LINK
 	testURLString := "https://www.tic.com"
 	testURL, _ := url.Parse(testURLString)
-	baseLink := &Link{URL: testURL}
+	basePage := &Page{URL: testURL}
 
 	// run a crawl of depth 1
 	var wg sync.WaitGroup
 	wg.Add(1)
-	crawl(baseLink, 1, testURL, &wg)
+	crawl(basePage, 1, testURL, &wg)
 	wg.Wait()
 
-	// verify data structure in baseLink is correct
+	// verify data structure in basePage is correct
 	expectedURLs := map[string]bool{
 		"https://www.tic.com/index.html":             false,
 		"https://www.tic.com/bios/index.html":        false,
@@ -92,7 +92,7 @@ func TestCrawl(t *testing.T) {
 	}
 
 	// check there are no unexpected links and mark found expected ones
-	for _, l := range baseLink.links {
+	for _, l := range basePage.links {
 		if _, ok := expectedURLs[l.URL.String()]; !ok {
 			t.Errorf("Unexpected link found: %s", l.URL.String())
 		} else {
@@ -122,14 +122,14 @@ func TestPrintSitemap(t *testing.T) {
 	subURL1, _ := url.Parse("https://test.com/sub1/")
 	subURL2, _ := url.Parse("https://test.com/sub2/")
 
-	baseLink := &Link{URL: baseURL}
-	subLink1 := &Link{URL: subURL1}
-	subLink2 := &Link{URL: subURL2}
+	basePage := &Page{URL: baseURL}
+	childPage1 := &Page{URL: subURL1}
+	childPage2 := &Page{URL: subURL2}
 
-	baseLink.links = append(baseLink.links, subLink1, subLink2)
+	basePage.links = append(basePage.links, childPage1, childPage2)
 
 	// write to file
-	err := printSitemap(baseLink, 0, outputFile)
+	err := printSitemap(basePage, 0, outputFile)
 	if err != nil {
 		t.Errorf("Couldnt printSitemap: %s", err)
 	}
